@@ -22,24 +22,24 @@ jobs:
         run: npm ci
 
       - name: Build Next.js
-        run: npm run build
+        run: npm run build # génère le dossier "out" grâce à next.config.js
 
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          bucket: ${{ secrets.S3_BUCKET }}
-          region: ${{ secrets.AWS_REGION }}
-          source-dir: out
-          delete: true
+          args: --acl public-read --follow-symlinks --delete out s3://${{ secrets.S3_BUCKET }}
         env:
+          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: "out"
 
       - name: Invalidate CloudFront cache
         uses: chetan/invalidate-cloudfront-action@v2
-        with:
-          distribution-id: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
-          paths: "/*"
         env:
+          DISTRIBUTION: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+          PATHS: "/*"
+          AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
